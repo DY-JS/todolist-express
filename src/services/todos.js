@@ -46,27 +46,34 @@ export async function update({ id, title, completed }) {
   );
 }
 
-// упрощённый removeMany
-// export function removeMany(ids) {
-//   todos = todos.filter((todo) => !ids.includes(todo.id)); //очистили todos
-// }
+// 1-й вариант removeMany
+export async function removeMany(ids) {
+  //сделаем строку из индексов массива ids --> $1, $3,..
+  // чтобы использовать в запросе
+  const indexesString = ids.map((id, index) => `$${index + 1}`).join(',');
+  console.log(indexesString);
 
-//если какой-то id ошибочный, то в контроллере try catch
-export function removeMany(ids) {
-  if (!ids.every(getById)) {
-    throw new Error();
-  }
-  todos = todos.filter((todo) => !ids.includes(todo.id)); //очистили todos
+  await client.query(`DELETE FROM todos WHERE id IN (${indexesString})`, ids);
 }
 
-export function updateMany(items) {
-  for (const { id, title, completed } of items) {
-    const foundTodo = getById(id); //находим todo для обновления в списке todos
+// 2-й вариант removeMany
+function isValidId(id) {
+  const pattern = /^[0-9a-f\-]+s/;
+  return pattern.test(id); //проверка что id валидный(соответствует паттерну)
+}
 
-    if (!foundTodo) {
-      continue;
-    }
+// export async function removeMany(ids) {
+// //сделаем проверку каждого id в массиве ids чтобы использовать в запросе
+//   if (!ids.every(isValidId)) {
+//     throw new Error();
+//   }
 
-    update({ id, title, completed }); //обновили todo в списке todos
+//   await client.query(`DELETE FROM todos
+//  WHERE id IN (${ids.map((id) => `'${id}'`).join(',')})`);
+// }
+
+export async function updateMany(todos) {
+  for (const { id, title, completed } of todos) {
+    await update({ id, title, completed }); //обновили todo в списке todos
   }
 }

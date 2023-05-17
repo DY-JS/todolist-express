@@ -59,8 +59,8 @@ export const update = async (req, res) => {
   }
 
   await todoService.update({ id: todoId, title, completed });
-
-  res.send(foundTodo);
+  const updatedTodo = todoService.getById(todoId);
+  res.send(updatedTodo);
 };
 
 //запрос localhost:8080/todos?action=delete body -  { "ids": ["1", "2"]} удалить несколько сразу
