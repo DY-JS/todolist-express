@@ -1,13 +1,13 @@
 import * as todoService from '../services/todos.js';
 
-export const getAll = (req, res) => {
-  const todos = todoService.getAll();
+export const getAll = async (req, res) => {
+  const todos = await todoService.getAll();
   res.send(todos);
 };
 
-export const getOne = (req, res) => {
+export const getOne = async (req, res) => {
   const { todoId } = req.params; //:todoId - это параметры после двоеточия
-  const foundTodo = todoService.getById(todoId);
+  const foundTodo = await todoService.getById(todoId);
   if (!todo) {
     res.sendStatus(404);
     return;
@@ -15,31 +15,36 @@ export const getOne = (req, res) => {
   res.send(foundTodo);
 };
 
-export const add = (req, res) => {
+export const add = async (req, res) => {
   const { title } = req.body;
 
-  const newTodo = todoService.create(title);
+  if (!title) {
+    res.sendStatus(422);
+    return;
+  }
+
+  const newTodo = await todoService.create(title);
 
   res.statusCode = 201; //Created
   res.send(newTodo);
 };
 
-export const remove = (req, res) => {
+export const remove = async (req, res) => {
   const { todoId } = req.params;
-  const todoForRemove = todoService.getById(todoId);
+  const todoForRemove = await todoService.getById(todoId);
 
   if (!todoForRemove) {
     res.sendStatus(404);
     return;
   }
 
-  todoService.remove(todoId);
+  await todoService.remove(todoId);
   res.sendStatus(204); //No content
 };
 
-export const update = (req, res) => {
+export const update = async (req, res) => {
   const { todoId } = req.params; //параметр после /
-  const foundTodo = todoService.getById(todoId);
+  const foundTodo = await todoService.getById(todoId);
   //если не найден с таким id
   if (!foundTodo) {
     res.sendStatus(404);
@@ -53,7 +58,7 @@ export const update = (req, res) => {
     return;
   }
 
-  todoService.update({ id: todoId, title, completed });
+  await todoService.update({ id: todoId, title, completed });
 
   res.send(foundTodo);
 };
