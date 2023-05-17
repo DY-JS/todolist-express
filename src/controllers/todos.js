@@ -65,6 +65,7 @@ export const removeMany = (req, res) => {
   if (!Array.isArray(ids)) {
     //если ids это не массив
     res.sendStatus(422);
+    return;
   }
   //если какой-то id в ids ошибочный, то removeMany(ids) не сраб.
   try {
