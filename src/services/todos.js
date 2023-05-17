@@ -1,73 +1,49 @@
 import { v4 as uuidv4 } from 'uuid';
-//import fs from 'fs';
-import fs from 'fs/promises';
-import path from 'path';
+import { client } from '../utils/db.js';
 
-const filePath = path.resolve('data', 'todos.json');
-
-//чтобы работать promise сделаем функцию async
-async function read() {
-  const data = await fs.readFile(filePath, 'utf8');
-  return JSON.parse(data);
-}
-
-async function write(todos) {
-  const data = JSON.stringify(todos, null, 2);
-  await fs.writeFile(filePath, data);
-}
-
-//чтобы не блокировать поток  лучше не исп. writeFileSync и сделаем функцию async
-// function write(todos) {
-//   const data = JSON.stringify(todos, null, 2);
-//   fs.writeFileSync(filePath, data);
-// }
-
-//чтобы не блокировать поток  лучше не исп. readFileSync и сделаем функцию async
-// function read() {
-//   const data = fs.readFileSync(filePath, 'utf-8');
-//   return JSON.parse(data);
-// }
-
-// function write(todos) {
-//   const data = JSON.stringify(todos, null, 2);
-//   fs.writeFileSync(filePath, data);
-// }
-
-export function getAll() {
-  return read();
-}
+export async function getAll() {
+  const result = await client.query(`SELECT * FROM todos ORDER BY created_at`);
+  return result.rows;
+} //ORDER BY created_at чтобы сохранить порядок при обновлении
 
 export async function getById(todoId) {
-  const todos = await read();
-  const foundTodo = todos.find((todo) => todo.id === todoId);
-  return foundTodo || null;
+  // const result = await client.query(`SELECT * FROM todos WHERE id='${todoId}'`);
+  //параметризированный запрос $1 - 1-й пар-р в массиве [todoId]
+  const result = await client.query(`SELECT * FROM todos WHERE id=$1`, [
+    todoId,
+  ]);
+  return result.rows[0] || null;
 }
 
 export async function create(title) {
-  const todos = await read();
-  const newTodo = {
-    id: uuidv4(),
-    title,
-    completed: false,
-  };
-
-  todos.push(newTodo);
-  await write(todos);
-
+  const id = uuidv4();
+  // await client.query(`INSERT INTO todos (id, title, completed)
+  //   VALUES ('${id}', '${title}', false)`);
+  //параметризированный запрос $1 -1-й в массиве -id, $2 -2-й в массиве -id [id, title]
+  await client.query(
+    `INSERT INTO todos (id, title, completed)
+    VALUES ($1, $2, false)`,
+    [id, title]
+  );
+  const newTodo = await getById(id);
   return newTodo;
 }
 
 export async function remove(todoId) {
-  const todos = await read();
-  await write(todos.filter((todo) => todo.id !== todoId));
+  // await client.query(`DELETE FROM todos WHERE id='${todoId}'`);
+  //параметризированный запрос $1 - 1-й пар-р в массиве [todoId]
+  await client.query(`DELETE FROM todos WHERE id=$1`, [todoId]);
 }
 
 export async function update({ id, title, completed }) {
-  const todos = await read();
-  const todo = todos.find((todo) => todo.id === id);
-  Object.assign(todo, { title, completed });
-  await write(todos);
-  return todo;
+  // await client.query(`UPDATE todos
+  //    SET title='${title}', completed=${completed}
+  //    WHERE id='${id}'`);
+  await client.query(
+    `UPDATE todos SET title=$2, completed=$3
+     WHERE id=$1`,
+    [id, title, completed]
+  );
 }
 
 // упрощённый removeMany

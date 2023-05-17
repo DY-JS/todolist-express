@@ -8,7 +8,7 @@ export const getAll = async (req, res) => {
 export const getOne = async (req, res) => {
   const { todoId } = req.params; //:todoId - это параметры после двоеточия
   const foundTodo = await todoService.getById(todoId);
-  if (!todo) {
+  if (!foundTodo) {
     res.sendStatus(404);
     return;
   }
