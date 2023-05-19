@@ -2,7 +2,7 @@ import * as todoService from '../services/todos.js';
 
 export const getAll = async (req, res) => {
   const todos = await todoService.getAll();
-  res.send(todos);
+  res.send(todos.map(todoService.normilize));
 };
 
 export const getOne = async (req, res) => {
@@ -12,7 +12,8 @@ export const getOne = async (req, res) => {
     res.sendStatus(404);
     return;
   }
-  res.send(foundTodo);
+  //todoService.normilize вернёт DTO без created_at
+  res.send(todoService.normalize(foundTodo));
 };
 
 export const add = async (req, res) => {
@@ -59,7 +60,7 @@ export const update = async (req, res) => {
   }
 
   await todoService.update({ id: todoId, title, completed });
-  const updatedTodo = todoService.getById(todoId);
+  const updatedTodo = await todoService.getById(todoId);
   res.send(updatedTodo);
 };
 
